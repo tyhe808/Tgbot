@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<title>AI Studio</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+:root{--bg:#0d0e22;--sf:#1a1b3b;--ln:#2d2f63;--tx:#eef0ff;--hint:#9b9ecb;--v:#7b61ff;--b:#3d8bff;--grad:linear-gradient(135deg,#7b61ff,#3d8bff);--f:-apple-system,system-ui,"Segoe UI",Roboto,sans-serif}
+*{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{background:radial-gradient(120% 60% at 50% -10%,#2a2470 0,var(--bg) 60%) no-repeat,var(--bg);color:var(--tx);font:16px/1.4 var(--f);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top)}
+header{display:flex;justify-content:space-between;align-items:center;padding:14px 16px 6px}
+h1{font-size:24px;font-weight:800;letter-spacing:-.03em}
+.bal{background:var(--sf);border:1px solid var(--ln);color:var(--tx);font:700 15px var(--f);padding:8px 14px;border-radius:20px}
+nav{display:flex;margin:8px 16px;background:var(--sf);border-radius:14px;padding:4px}
+nav button{flex:1;padding:10px;border:0;border-radius:11px;background:none;color:var(--hint);font:600 15px var(--f)}
+nav button.on{background:var(--grad);color:#fff}
+main{flex:1;overflow:auto;padding:4px 16px 16px}
+.view{display:none}.view.on{display:block}
+.drop{display:block;border:2px dashed var(--ln);border-radius:18px;padding:26px 16px;text-align:center;color:var(--hint);background:var(--sf)}
+.drop img,.res img{max-width:100%;max-height:46vh;border-radius:14px;display:block;margin:0 auto}
+.styles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}
+.st{background:var(--sf);border:2px solid transparent;border-radius:14px;padding:12px 4px;text-align:center;font:500 13px var(--f);color:var(--tx)}
+.st span{display:block;font-size:28px;margin-bottom:4px}
+.st.on{border-color:var(--v);background:#24235a}
+.big{display:block;width:100%;margin-top:12px;padding:14px;border:0;border-radius:14px;background:var(--grad);color:#fff;font:700 16px var(--f);text-align:center;text-decoration:none}
+.big:disabled{opacity:.5}
+.ghost{background:var(--sf);border:1px solid var(--ln);color:var(--tx)}
+.msgs{display:flex;flex-direction:column;gap:8px;padding-bottom:8px}
+.m{max-width:86%;padding:10px 13px;border-radius:16px;white-space:pre-wrap;word-wrap:break-word}
+.m.u{align-self:flex-end;background:var(--grad);color:#fff}
+.m.a{align-self:flex-start;background:var(--sf)}
+.in{display:none;gap:8px;padding:8px 16px calc(10px + env(safe-area-inset-bottom))}
+.in input{flex:1;min-width:0;padding:12px 14px;border-radius:14px;border:1px solid var(--ln);background:var(--sf);color:var(--tx);font:16px var(--f);outline:none}
+.in input:focus{border-color:var(--v)}
+.in button{border:0;border-radius:14px;padding:0 18px;background:var(--grad);color:#fff;font:700 16px var(--f)}
+.hint{color:var(--hint);font-size:13px;margin-top:10px}
+.hint a{color:var(--b)}
+#shop{position:fixed;inset:0;background:rgba(5,5,20,.7);display:none;align-items:flex-end}
+#shop.on{display:flex}
+.sheet{background:var(--bg);border-top:1px solid var(--ln);width:100%;border-radius:22px 22px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom))}
+.pack{display:flex;justify-content:space-between;align-items:center;width:100%;background:var(--sf);border:2px solid transparent;border-radius:14px;padding:14px;margin-top:8px;color:var(--tx);font:600 16px var(--f);text-align:left}
+.pack.best{border-color:var(--v)}
+.pack.prem{background:#241f66;border-color:var(--b)}
+.pack small{display:block;color:var(--hint);font-weight:400;font-size:13px}
+#toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);background:#fff;color:#14153a;padding:10px 16px;border-radius:12px;display:none;max-width:88%;text-align:center;font-weight:600}
+:focus-visible{outline:2px solid var(--b);outline-offset:2px}
+@media (prefers-reduced-motion:no-preference){.st,.pack,.big{transition:transform .1s}.st:active,.pack:active,.big:active{transform:scale(.97)}}
+</style>
+</head>
+<body>
+<header><h1>AI Studio</h1><button class="bal" id="bal">✨ …</button></header>
+<nav><button data-v="photo" class="on">Фото</button><button data-v="chat">Помощник</button></nav>
+
+<main>
+ <section class="view on" id="photo">
+  <label class="drop" id="drop"><input type="file" id="file" accept="image/*" hidden><span>Выбери селфи или фото</span></label>
+  <div class="styles" id="styles"></div>
+  <button class="big" id="go">Создать · 10 кредитов</button>
+  <div class="res" id="res"></div>
+  <button class="big ghost" id="inv">Позвать друга: +10 кредитов</button>
+  <p class="hint">Фото не сохраняются на сервере. Загружай только свои фото или фото людей, которые согласны. <a href="/privacy" target="_blank">Конфиденциальность</a></p>
+ </section>
+ <section class="view" id="chat"><div class="msgs" id="msgs"><div class="m a">Привет! Спроси что угодно или попроси написать текст. Одно сообщение стоит 1 кредит, а с Premium чат безлимитный.</div></div></section>
+</main>
+
+<form class="in" id="form" onsubmit="return false"><input id="q" placeholder="Сообщение" autocomplete="off"><button id="send">Отправить</button></form>
+
+<div id="shop"><div class="sheet">
+ <h1>Пополнить баланс</h1><p class="hint" style="margin-top:2px">Оплата в Telegram Stars ⭐</p>
+ <button class="pack prem" data-p="sub"><span>Premium на месяц<small>безлимитный чат и 300 кредитов</small></span><b>400 ⭐</b></button>
+ <button class="pack" data-p="p100">100 кредитов<b>100 ⭐</b></button>
+ <button class="pack best" data-p="p350"><span>350 кредитов<small>самый выгодный старт</small></span><b>300 ⭐</b></button>
+ <button class="pack" data-p="p1000">1000 кредитов<b>750 ⭐</b></button>
+ <button class="big ghost" id="close">Закрыть</button>
+</div></div>
+<div id="toast"></div>
+
+<script>
+const tg=Telegram.WebApp; tg.ready(); tg.expand();
+try{tg.setHeaderColor("#0d0e22");tg.setBackgroundColor("#0d0e22")}catch(e){}
+const H={"X-Init-Data":tg.initData};
+const $=s=>document.querySelector(s);
+const STYLES=[["🎌","Аниме"],["🧸","3D-мультик"],["🌃","Киберпанк"],["🖼️","Масло"],["📰","Обложка"],["👴","Я в 80"]];
+let style=STYLES[0][1], img=null, hist=[], me={};
+
+function toast(t){const e=$("#toast");e.textContent=t;e.style.display="block";clearTimeout(toast.t);toast.t=setTimeout(()=>e.style.display="none",3000)}
+function setBal(n){me.credits=n;$("#bal").textContent=(me.premium?"👑 ":"✨ ")+n}
+function openShop(){$("#shop").classList.add("on")}
+async function api(path,opt={}){
+  const r=await fetch(path,{...opt,headers:{...H,...(opt.headers||{})}});
+  const j=await r.json().catch(()=>({}));
+  if(r.status===402){openShop();throw Error("Кредиты закончились. Пополни баланс.")}
+  if(!r.ok) throw Error(j.detail||"Ошибка сервера");
+  return j;
+}
+const post=(p,b)=>api(p,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(b)});
+
+$("#styles").innerHTML=STYLES.map(([e,n],i)=>`<button class="st ${i?"":"on"}" data-s="${n}"><span>${e}</span>${n}</button>`).join("");
+$("#styles").onclick=e=>{const b=e.target.closest(".st");if(!b)return;style=b.dataset.s;document.querySelectorAll(".st").forEach(x=>x.classList.toggle("on",x===b))};
+
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll("nav button").forEach(x=>x.classList.toggle("on",x===b));
+  document.querySelectorAll(".view").forEach(v=>v.classList.toggle("on",v.id===b.dataset.v));
+  $("#form").style.display=b.dataset.v==="chat"?"flex":"none";
+});
+
+$("#file").onchange=e=>{img=e.target.files[0];if(!img)return;
+  $("#drop").innerHTML=`<img alt="Твоё фото" src="${URL.createObjectURL(img)}">`};
+
+$("#go").onclick=async()=>{
+  if(!img) return toast("Сначала выбери фото");
+  const b=$("#go");b.disabled=true;b.textContent="Создаём… до минуты";
+  try{
+    const fd=new FormData();fd.append("file",img);fd.append("style",style);
+    const j=await api("/api/photo",{method:"POST",body:fd});
+    setBal(j.credits);
+    $("#res").innerHTML=`<img alt="Результат" src="${j.image}" style="margin-top:12px"><a class="big" download="aistudio.png" href="${j.image}">Сохранить</a>`;
+    tg.HapticFeedback.notificationOccurred("success");
+  }catch(e){toast(e.message)}
+  b.disabled=false;b.textContent="Создать · 10 кредитов";
+};
+
+async function send(){
+  const t=$("#q").value.trim();if(!t)return;$("#q").value="";
+  const box=$("#msgs");
+  box.insertAdjacentHTML("beforeend",`<div class="m u"></div>`);box.lastChild.textContent=t;
+  hist.push({role:"user",content:t});
+  box.insertAdjacentHTML("beforeend",`<div class="m a">…</div>`);const el=box.lastChild;
+  try{
+    const j=await post("/api/chat",{messages:hist});
+    el.textContent=j.text;hist.push({role:"assistant",content:j.text});setBal(j.credits);
+  }catch(e){el.textContent=e.message;hist.pop()}
+  el.scrollIntoView({block:"end"});
+}
+$("#send").onclick=send;$("#q").onkeydown=e=>{if(e.key==="Enter")send()};
+
+$("#bal").onclick=openShop;$("#close").onclick=()=>$("#shop").classList.remove("on");
+document.querySelectorAll(".pack").forEach(b=>b.onclick=async()=>{
+  try{
+    const {link}=await post("/api/invoice",{pack:b.dataset.p});
+    tg.openInvoice(link,st=>{
+      if(st==="paid"){$("#shop").classList.remove("on");toast("Оплата прошла, зачисляем…");
+        setTimeout(async()=>{me={...me,...await api("/api/me")};setBal(me.credits)},2500)}
+    });
+  }catch(e){toast(e.message)}
+});
+
+$("#inv").onclick=()=>{
+  const url=`${me.app_link}ref${me.id}`;
+  tg.openTelegramLink("https://t.me/share/url?url="+encodeURIComponent(url)+"&text="+encodeURIComponent("Фото-стили и ИИ-помощник в Telegram. 30 кредитов в подарок"));
+};
+
+api("/api/me").then(j=>{me=j;setBal(j.credits)}).catch(e=>toast(e.message));
+</script>
+</body>
+</html>
